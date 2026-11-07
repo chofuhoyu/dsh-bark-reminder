@@ -46,7 +46,8 @@ dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
 6. **频率与去重**：去重窗口、每分钟上限。
 7. **发送测试**：用当前设置真实发送一条推送。
 
-页面顶部和底部各有一个保存按钮；保存走 `configEditor`，写入 profile patch 并立即生效。
+配置项改动后自动保存：停止输入约 0.6 秒即写入，离开本页时仍会补写最后一次改动；
+保存走 `configEditor`，写入 profile patch 并立即生效。设备密钥单独处理，粘贴后按「保存密钥」写入。
 
 ### 模板变量
 

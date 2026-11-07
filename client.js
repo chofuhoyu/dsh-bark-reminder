@@ -18,6 +18,12 @@ window.__ModuleLoader__.load({
     /** Route prefix the Host registers; relative to the page document. */
     const API = 'api/bark-reminder'
 
+    /** Quiet period after an edit before the page writes the configuration. */
+    const AUTO_SAVE_DELAY_MS = 600
+
+    /** Backoff between retries while the Host restarts through a write. */
+    const SAVE_RETRY_DELAYS_MS = [250, 500, 1000]
+
     /** Template placeholders offered by the page; must match `host/messages.js`. */
     const VARIABLES = [
       'kindLabel', 'detail', 'sessionTitle', 'project', 'cwd',
@@ -141,13 +147,10 @@ window.__ModuleLoader__.load({
       'limits.rateDesc': 'Extras beyond this limit are dropped and logged once.',
       'unit.seconds': 's',
       'unit.perMinute': 'pushes',
-      'save.button': 'Save settings',
       'save.saving': 'Saving…',
-      'save.saved': 'Settings saved and applied',
-      'save.unconfirmed': 'Submitted, but the change is not confirmed yet — reopen this page in a moment.',
+      'save.pending': 'Saving automatically…',
       'save.failed': 'Could not save',
       'save.invalid': 'Invalid setting',
-      'save.dirty': 'Unsaved changes',
       'save.clean': 'All changes saved',
       'recent.title': 'Recent pushes',
       'recent.desc': 'Kept for this DSH run only.',
@@ -286,13 +289,10 @@ window.__ModuleLoader__.load({
       'limits.rateDesc': '超过后丢弃多余提醒，并在日志里记一条警告。',
       'unit.seconds': '秒',
       'unit.perMinute': '条',
-      'save.button': '保存设置',
       'save.saving': '保存中…',
-      'save.saved': '设置已保存并生效',
-      'save.unconfirmed': '已提交，但还没有确认生效，请稍后重新打开本页查看。',
+      'save.pending': '正在自动保存…',
       'save.failed': '保存失败',
       'save.invalid': '设置有误',
-      'save.dirty': '有未保存的修改',
       'save.clean': '所有修改已保存',
       'recent.title': '最近推送',
       'recent.desc': '只保留本次 DSH 运行期间的记录。',
@@ -320,7 +320,6 @@ window.__ModuleLoader__.load({
 .bark-page { display:flex; flex-direction:column; gap:14px; max-width:720px; padding:2px 0 0; color:var(--dsw-alias-label-primary); }
 .bark-header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
 .bark-header-copy { display:flex; flex-direction:column; gap:4px; min-width:0; }
-.bark-header-action { display:flex; align-items:center; gap:8px; flex:0 0 auto; padding-top:2px; }
 .bark-title { margin:0; font-size:16px; line-height:24px; font-weight:500; }
 .bark-intro { margin:0; font-size:14px; line-height:22px; color:var(--dsw-alias-label-tertiary); }
 .bark-pills { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
@@ -370,8 +369,6 @@ window.__ModuleLoader__.load({
 .bark-btn { height:32px; padding:0 12px; border:none; border-radius:var(--dsw-radius-md); background:transparent; color:var(--dsw-alias-label-primary); font-family:inherit; font-size:13px; line-height:20px; cursor:pointer; }
 .bark-btn:hover:not(:disabled) { background:var(--dsw-alias-interactive-bg-hover); }
 .bark-btn:disabled { opacity:.4; cursor:not-allowed; }
-.bark-btn.primary { background:var(--dsw-alias-button-primary-fill); color:var(--dsw-alias-label-primary-foreground); }
-.bark-btn.primary:hover:not(:disabled) { background:var(--dsw-alias-button-primary-hover); }
 .bark-btn.danger { color:var(--dsw-alias-state-error-primary); }
 .bark-btn.small { height:28px; padding:0 10px; font-size:12px; }
 .bark-notice { font-size:12px; line-height:18px; }
@@ -381,8 +378,7 @@ window.__ModuleLoader__.load({
 .bark-hint { font-size:12px; line-height:18px; color:var(--dsw-alias-label-tertiary); }
 .bark-warn { color:var(--dsw-alias-state-warn-primary); }
 .bark-code { font-family:var(--dsw-alias-font-mono, ui-monospace, SFMono-Regular, monospace); font-size:12px; }
-.bark-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:12px; border-top:0.5px solid var(--dsw-alias-border-l1); }
-.bark-footer-actions { display:flex; align-items:center; gap:8px; }
+.bark-footer { display:flex; align-items:center; gap:12px; padding-top:12px; border-top:0.5px solid var(--dsw-alias-border-l1); }
 .bark-recent { list-style:none; margin:0; padding:0; }
 .bark-recent-item { display:flex; align-items:baseline; gap:10px; padding:6px 0; border-bottom:0.5px solid var(--dsw-alias-border-l1); font-size:12px; line-height:18px; }
 .bark-recent-item:last-child { border-bottom:none; }
@@ -436,7 +432,7 @@ window.__ModuleLoader__.load({
       return payload
     }
 
-    /** Wait without busy-looping the save confirmation. */
+    /** Wait between save retries while the Host entry restarts. */
     function delay(ms) {
       return new Promise(resolve => setTimeout(resolve, ms))
     }
@@ -504,6 +500,34 @@ window.__ModuleLoader__.load({
     /** Compare two form states by value. */
     function sameForm(left, right) {
       return JSON.stringify(left) === JSON.stringify(right)
+    }
+
+    /** Compare two form states by the configuration they would store. */
+    function sameConfig(left, right) {
+      return JSON.stringify(toConfig(left)) === JSON.stringify(toConfig(right))
+    }
+
+    /**
+     * Write one configuration, retrying while the restart it triggers is in
+     * flight: the Host answers before persisting, then re-registers its routes.
+     * A rejected setting is final and is not retried.
+     * @param {object} config - validated configuration.
+     * @returns {Promise<any>} the Host response.
+     */
+    async function submitConfig(config) {
+      let lastError
+      for (let attempt = 0; attempt <= SAVE_RETRY_DELAYS_MS.length; attempt += 1) {
+        try {
+          return await api('config', { method: 'POST', body: { config } })
+        } catch (error) {
+          lastError = error
+          const status = error?.status
+          const transient = status === undefined || status === 404 || status >= 500
+          if (!transient || attempt === SAVE_RETRY_DELAYS_MS.length) throw error
+          await delay(SAVE_RETRY_DELAYS_MS[attempt])
+        }
+      }
+      throw lastError
     }
 
     /** Localize the clock of one recent delivery. */
@@ -599,6 +623,15 @@ window.__ModuleLoader__.load({
       const [testResult, setTestResult] = useState(undefined)
       const [preview, setPreview] = useState(undefined)
       const bodyRef = useRef(null)
+      // Mirrors of the editable state for the debounced writer and for the
+      // write still owed when the section unmounts.
+      const formRef = useRef(form)
+      const savedFormRef = useRef(savedForm)
+      const savingRef = useRef(false)
+      const failedFormRef = useRef(undefined)
+      const mountedRef = useRef(true)
+      formRef.current = form
+      savedFormRef.current = savedForm
 
       const load = useCallback(async (options) => {
         const keepForm = options === true
@@ -739,46 +772,81 @@ window.__ModuleLoader__.load({
       }, [t])
 
       const save = useCallback(async () => {
-        if (form === undefined || saving) return
-        const invalid = validateForm(form, t)
+        if (savingRef.current) return
+        const submitted = formRef.current
+        const saved = savedFormRef.current
+        if (submitted === undefined || saved === undefined) return
+        if (sameForm(submitted, saved)) return
+        if (failedFormRef.current !== undefined && sameForm(submitted, failedFormRef.current)) return
+        // Whitespace or numeric formatting that normalizes to the stored
+        // configuration needs no write and no restart.
+        if (sameConfig(submitted, saved)) {
+          savedFormRef.current = submitted
+          setSavedForm(submitted)
+          return
+        }
+        const invalid = validateForm(submitted, t)
         if (invalid !== undefined) {
+          failedFormRef.current = submitted
           setNotice({ kind: 'error', text: invalid })
           return
         }
+        savingRef.current = true
         setSaving(true)
         setNotice(undefined)
-        const submitted = form
         try {
-          await api('config', { method: 'POST', body: { config: toConfig(form) } })
+          const result = await submitConfig(toConfig(submitted))
+          savedFormRef.current = submitted
           setSavedForm(submitted)
-          let applied = false
-          const deadline = Date.now() + 8000
-          while (Date.now() < deadline) {
-            await delay(350)
-            try {
-              const next = await api('config')
-              setData(next)
-              if (sameForm(toForm(next.config), submitted)) {
-                applied = true
-                break
-              }
-            } catch {
-              // The entry is restarting while it applies the new configuration.
-            }
+          failedFormRef.current = undefined
+          if (result?.config !== undefined) {
+            setData(current => (current === undefined ? current : { ...current, config: result.config }))
           }
-          setNotice(applied
-            ? { kind: 'success', text: t('save.saved') }
-            : { kind: 'warn', text: t('save.unconfirmed') })
         } catch (error) {
+          // Keep the failed draft from retrying on every render; the next edit
+          // clears the guard and tries again.
+          failedFormRef.current = submitted
           const details = error.payload?.errors
           const detail = Array.isArray(details) && details.length > 0
             ? `${t('save.invalid')}：${details[0].field} ${details[0].message}`
             : `${t('save.failed')}：${error.message}`
           setNotice({ kind: 'error', text: detail })
         } finally {
+          savingRef.current = false
           setSaving(false)
+          // A section that unmounted while this write was in flight still owes
+          // the edit that arrived after the submitted one.
+          if (!mountedRef.current) void saveRef.current()
         }
-      }, [form, saving, t])
+      }, [t])
+
+      // Every edit writes itself after a short quiet period, matching the
+      // instant-save convention of the other settings sections.
+      useEffect(() => {
+        if (form === undefined || savedForm === undefined) return undefined
+        if (saving || sameConfig(form, savedForm)) return undefined
+        if (failedFormRef.current !== undefined && sameForm(form, failedFormRef.current)) return undefined
+        const timer = setTimeout(() => { void save() }, AUTO_SAVE_DELAY_MS)
+        return () => clearTimeout(timer)
+      }, [form, savedForm, saving, save])
+
+      // Leaving the section still writes the last edit; a write already in
+      // flight covers the change it was given.
+      const saveRef = useRef(save)
+      saveRef.current = save
+      useEffect(() => {
+        mountedRef.current = true
+        return () => {
+          mountedRef.current = false
+          if (savingRef.current) return
+          const submitted = formRef.current
+          const saved = savedFormRef.current
+          if (submitted === undefined || saved === undefined) return
+          if (sameConfig(submitted, saved)) return
+          if (failedFormRef.current !== undefined && sameForm(submitted, failedFormRef.current)) return
+          void saveRef.current()
+        }
+      }, [])
 
       if (phase === 'loading') {
         return h('div', { className: 'bark-page' },
@@ -794,7 +862,7 @@ window.__ModuleLoader__.load({
             h('button', { type: 'button', className: 'bark-btn small', onClick: () => { void load() } }, t('load.retry'))))
       }
 
-      const dirty = savedForm !== undefined && !sameForm(form, savedForm)
+      const dirty = savedForm !== undefined && !sameConfig(form, savedForm)
       const key = data.key ?? { configured: false, source: null, writable: true }
       const recent = Array.isArray(data.status?.recent) ? data.status.recent : []
       const counters = data.status?.counters ?? { sent: 0, failed: 0, skipped: 0 }
@@ -815,14 +883,7 @@ window.__ModuleLoader__.load({
               h('span', { className: `bark-pill ${data.config.enabled ? 'ok' : 'muted'}` },
                 data.config.enabled ? t('status.enabled') : t('status.disabled')),
               h('span', { className: `bark-pill ${key.configured ? 'ok' : 'warn'}` },
-                key.configured ? t('status.keyConfigured') : t('status.keyMissing')))),
-          h('div', { className: 'bark-header-action' },
-            h('button', {
-              type: 'button',
-              className: 'bark-btn primary',
-              disabled: saving || !dirty,
-              onClick: () => { void save() },
-            }, saving ? t('save.saving') : t('save.button')))),
+                key.configured ? t('status.keyConfigured') : t('status.keyMissing'))))),
 
         notice === undefined ? null : h(Notice, { kind: notice.kind }, notice.text),
 
@@ -1090,16 +1151,10 @@ window.__ModuleLoader__.load({
             `${t('recent.sent')} ${counters.sent} · ${t('recent.failed')} ${counters.failed} · ${t('recent.skipped')} ${counters.skipped}`)),
 
         h('div', { className: 'bark-footer' },
-          notice === undefined
-            ? h('span', { className: 'bark-hint' }, dirty ? t('save.dirty') : t('save.clean'))
-            : h(Notice, { kind: notice.kind }, notice.text),
-          h('div', { className: 'bark-footer-actions' },
-            h('button', {
-              type: 'button',
-              className: 'bark-btn primary',
-              disabled: saving || !dirty,
-              onClick: () => { void save() },
-            }, saving ? t('save.saving') : t('save.button')))))
+          notice !== undefined
+            ? h(Notice, { kind: notice.kind }, notice.text)
+            : h('span', { className: 'bark-hint' },
+              saving ? t('save.saving') : dirty ? t('save.pending') : t('save.clean'))))
     }
 
     /** Nav glyph for the settings section. */
