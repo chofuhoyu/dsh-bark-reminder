@@ -75,6 +75,21 @@ dsh plugin --profile <profile> add /absolute/path/to/dsh-bark
 - 记录推送失败的日志只包含 Bark 的返回信息，不含设备密钥。
 - 「最近推送」只在本次 DSH 进程内保留，重启即清空。
 
+### 凭据库写入失败时
+
+凭据库是 `~/.dsh/.credentials.yaml`（`@deepseek-ai/dsh-credentials-local`），
+写入被拒时页面会显示真实原因，并把密钥改存到插件配置行；之后成功写入凭据库时会自动清掉这份回退副本。
+
+常见的一条：`Expected YAML collection at refs. Remaining path: BARK_DEVICE_KEY`。
+这说明凭据文档里有一个**空的** `refs:` 节点（冒号后没有缩进条目），读取时被当成空表，
+但写入时无法往一个 null 节点里塞 `refs.BARK_DEVICE_KEY`。把那一行改成 `refs: {}`（或删掉这一行）即可，
+不要动其它条目。插件本身不受影响：回退密钥已经能用。
+
+- 设备密钥不会出现在 `GET /api/bark-reminder/config` 的响应里，只返回 `configured`、`source`、`writable`。
+- 页面的保存接口对密钥单独处理，不经过设置表单，页面提交无法覆盖它。
+- 记录推送失败的日志只包含 Bark 的返回信息，不含设备密钥。
+- 「最近推送」只在本次 DSH 进程内保留，重启即清空。
+
 ## Host 行为细节
 
 - 审批与提问监听挂在 answerer waterfall 的最前面，但永远调用 `next()`：提醒不改变任何决定，也不抢占 UI 的回答通道。
