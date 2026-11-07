@@ -189,7 +189,11 @@ export class BarkReminderRuntime {
     if (credentials !== undefined) {
       try {
         await credentials.set(DEVICE_KEY_REF, value)
-        return { store: 'credentials' }
+        // A key that reached the credential store must not keep its plaintext
+        // fallback copy in the profile patch.
+        const clearedFallback = this.config.deviceKey !== ''
+        if (clearedFallback) this.config = { ...this.config, deviceKey: '' }
+        return clearedFallback ? { store: 'credentials', clearedFallback: true } : { store: 'credentials' }
       } catch (error) {
         // A profile whose credential provider refuses writes still needs a
         // working reminder; the page reports the downgrade instead of hiding it.

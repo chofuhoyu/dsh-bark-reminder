@@ -149,7 +149,7 @@ export function createRoutes(ctx, runtime) {
       return json({ code: 'invalid-key', message: 'device key must be one non-empty token without whitespace' }, 422)
     }
     const stored = await runtime.setDeviceKey(key)
-    if (stored.store === 'config') schedulePersist(ctx, runtime.config)
+    if (stored.store === 'config' || stored.clearedFallback === true) schedulePersist(ctx, runtime.config)
     return json({
       ok: true,
       store: stored.store,

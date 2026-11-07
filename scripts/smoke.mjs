@@ -275,6 +275,26 @@ assert.equal(plain.reason, '允许这次编辑吗？')
   runtime.dispose()
 }
 
+// A successful credential write clears the plaintext fallback copy.
+{
+  const agent = makeAgent()
+  let written
+  const credentials = {
+    set: async (_ref, value) => { written = value },
+    unset: async () => {},
+    resolve: async () => ({ value: written, source: 'file' }),
+    describe: async () => ({ configured: true, source: 'file', writable: true }),
+  }
+  const { ctx } = makeContext(agent, { services: { credentials } })
+  const runtime = new BarkReminderRuntime(ctx, resolveConfig({}).config)
+  runtime.config = { ...runtime.config, deviceKey: 'old-fallback-copy' }
+  const stored = await runtime.setDeviceKey('credential-key')
+  assert.equal(written, 'credential-key')
+  assert.deepEqual(stored, { store: 'credentials', clearedFallback: true })
+  assert.equal(runtime.config.deviceKey, '')
+  runtime.dispose()
+}
+
 // -- settings routes -------------------------------------------------------
 
 
