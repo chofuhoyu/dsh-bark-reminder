@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Bark reminder bell">
+  <defs>
+    <linearGradient id="bark-bg" x1="8" y1="6" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#3B6DF0"/>
+      <stop offset="1" stop-color="#1F3FB0"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#bark-bg)"/>
+  <path d="M32 14c-7.18 0-13 5.82-13 13v9.2l-3.6 5.4c-.72 1.08.05 2.53 1.34 2.53h30.52c1.29 0 2.06-1.45 1.34-2.53L45 36.2V27c0-7.18-5.82-13-13-13Z" fill="#F7F9FF" opacity="0.96"/>
+  <path d="M26.4 46.6a5.6 5.6 0 0 0 11.2 0h-11.2Z" fill="#F7F9FF" opacity="0.96"/>
+  <circle cx="46" cy="19" r="7" fill="#FFB020"/>
+  <circle cx="46" cy="19" r="7" fill="none" stroke="#1F3FB0" stroke-width="2.4"/>
+</svg>
