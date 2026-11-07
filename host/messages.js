@@ -154,8 +154,8 @@ export function sampleVars(locale, time, host) {
   if (locale === 'en') {
     return {
       sessionTitle: 'Refactor the login flow',
-      project: 'dsh-bark',
-      cwd: '/Users/you/Code/dsh-bark',
+      project: 'dsh-bark-reminder',
+      cwd: '/Users/you/Code/dsh-bark-reminder',
       tool: 'bash',
       reason: 'Drops stale rows from the production database',
       question: 'Which database should the migration use?',
@@ -170,8 +170,8 @@ export function sampleVars(locale, time, host) {
   }
   return {
     sessionTitle: '重构登录流程',
-    project: 'dsh-bark',
-    cwd: '/Users/you/Code/dsh-bark',
+    project: 'dsh-bark-reminder',
+    cwd: '/Users/you/Code/dsh-bark-reminder',
     tool: 'bash',
     reason: '删除生产库里的旧数据',
     question: '迁移要使用哪个数据库？',

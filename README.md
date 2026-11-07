@@ -26,7 +26,7 @@
 在 DSH 的「设置 → 插件」里添加本地目录，或在本仓库目录执行：
 
 ```sh
-dsh plugin --profile <profile> add /absolute/path/to/dsh-bark
+dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
 ```
 
 安装后重启不是必须的：Host 行和浏览器半会随 Plugin Manager 的安装流程激活。

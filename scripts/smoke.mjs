@@ -17,7 +17,7 @@ import { createRoutes } from '../host/http.js'
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 /** One fake live agent backed by one fake session. */
-function makeAgent({ cwd = '/tmp/dsh-bark-fixture', status = 'idle' } = {}) {
+function makeAgent({ cwd = '/tmp/dsh-bark-reminder-fixture', status = 'idle' } = {}) {
   const session = { id: 'session-1', header: { cwd } }
   return {
     id: 'session-1',
