@@ -85,6 +85,10 @@ dsh plugin --profile <profile> add /absolute/path/to/dsh-bark
 但写入时无法往一个 null 节点里塞 `refs.BARK_DEVICE_KEY`。把那一行改成 `refs: {}`（或删掉这一行）即可，
 不要动其它条目。插件本身不受影响：回退密钥已经能用。
 
+`refs` 是「名字 → 值」的普通映射，值就是提交的字符串本身，不会解析 `~`、相对路径或任何文件引用。
+因此把 `~/.dsh/.credentials.yaml` 这样的路径填进设备密钥框，只会存下这个字符串，Bark 也不会认；
+设置页现在会拦下包含 `/`、`\` 或以 `~`、`.` 开头的输入并提示粘贴真正的推送 key。
+
 - 设备密钥不会出现在 `GET /api/bark-reminder/config` 的响应里，只返回 `configured`、`source`、`writable`。
 - 页面的保存接口对密钥单独处理，不经过设置表单，页面提交无法覆盖它。
 - 记录推送失败的日志只包含 Bark 的返回信息，不含设备密钥。

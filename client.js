@@ -65,6 +65,7 @@ window.__ModuleLoader__.load({
       'key.missing': 'No device key yet, so nothing will be pushed.',
       'key.readonly': 'The key comes from the environment and cannot be changed here.',
       'key.invalid': 'Enter the key as one token without spaces.',
+      'key.looksLikePath': 'That looks like a file path, not a Bark device key. Paste the push key from the Bark app home screen.',
       'key.failed': 'Could not save the key',
       'test.title': 'Test notification',
       'test.desc': 'Send one push with the current settings to confirm the phone receives it.',
@@ -209,6 +210,7 @@ window.__ModuleLoader__.load({
       'key.missing': '还没有设备密钥，Bark 推送不会发出。',
       'key.readonly': '当前密钥来自环境变量，页面上不能修改。',
       'key.invalid': '密钥必须是连续的一段字符，不能包含空格。',
+      'key.looksLikePath': '这看起来是文件路径，不是 Bark 设备密钥；请粘贴 Bark App 首页复制的推送 key。',
       'key.failed': '密钥保存失败',
       'test.title': '测试通知',
       'test.desc': '用当前设置发一条测试推送，确认手机能收到。',
@@ -682,6 +684,13 @@ window.__ModuleLoader__.load({
       }, [])
 
       const saveKey = useCallback(async (clear) => {
+        const candidate = keyDraft.trim()
+        // The credential store keeps the submitted string verbatim; a path
+        // here is a pasted value, not a reference, and can never authenticate.
+        if (clear !== true && (/[\\/]/.test(candidate) || candidate.startsWith('~') || candidate.startsWith('.'))) {
+          setKeyNotice({ kind: 'error', text: t('key.looksLikePath') })
+          return
+        }
         setKeyBusy(true)
         setKeyNotice(undefined)
         try {
