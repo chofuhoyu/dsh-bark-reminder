@@ -86,10 +86,11 @@ assert.equal(defaults.config.bodyTemplate, '{detail}')
 assert.equal(defaults.config.icon, DEFAULT_ICON_URL)
 assert.equal(DEFAULT_ICON_URL, 'https://raw.githubusercontent.com/chofuhoyu/dsh-bark-reminder/main/icon.png')
 
-// An explicitly cleared icon keeps Bark's native artwork.
-const nativeIcon = resolveConfig({ icon: '' }, { strict: true })
-assert.equal(nativeIcon.errors.length, 0)
-assert.equal(nativeIcon.config.icon, '')
+// A profile saved before the default existed stores an empty icon; it must
+// resolve to the project artwork rather than Bark's native icon.
+const emptyIcon = resolveConfig({ icon: '' }, { strict: true })
+assert.equal(emptyIcon.errors.length, 0)
+assert.equal(emptyIcon.config.icon, DEFAULT_ICON_URL)
 
 const customIcon = resolveConfig({ icon: ' https://example.com/icon.png ' }, { strict: true })
 assert.equal(customIcon.errors.length, 0)
@@ -200,26 +201,6 @@ assert.equal(plain.reason, '允许这次编辑吗？')
   await wait(20)
   assert.equal(requests.length, 0)
   quiet.dispose()
-}
-
-// -- native icon fallback --------------------------------------------------
-
-{
-  requests.length = 0
-  const agent = makeAgent()
-  const { ctx, listeners } = makeContext(agent)
-  const runtime = new BarkReminderRuntime(ctx, resolveConfig({ icon: '' }).config)
-  runtime.install()
-  await listeners.get('approval/request')({
-    agent,
-    toolName: 'edit',
-    callId: 'call-native-icon',
-    reason: 'Auto review denied tool "edit": nope',
-  }, async () => 'rejected')
-  await wait(30)
-  assert.equal(requests.length, 1)
-  assert.equal('icon' in requests[0].body, false)
-  runtime.dispose()
 }
 
 // -- structured question ---------------------------------------------------

@@ -61,8 +61,8 @@ export const DEFAULT_CONFIG = Object.freeze({
   level: 'active',
   sound: '',
   group: 'DSH',
-  // An empty value keeps Bark's native icon; the default replaces it with the
-  // repository's PNG artwork.
+  // An empty value is an unset icon from an older profile, so it resolves to
+  // the repository artwork rather than Bark's native icon.
   icon: DEFAULT_ICON_URL,
   urlTemplate: '',
   call: false,
@@ -209,7 +209,7 @@ export function resolveConfig(raw, { strict = false } = {}) {
   else if (typeof input.icon !== 'string') {
     reject('icon', 'must be a string')
     config.icon = DEFAULT_CONFIG.icon
-  } else if (input.icon.trim() === '') config.icon = ''
+  } else if (input.icon.trim() === '') config.icon = DEFAULT_ICON_URL
   else {
     try {
       const icon = new URL(input.icon.trim())
