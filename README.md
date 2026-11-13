@@ -5,21 +5,27 @@
 
 ## 安装
 
-从 GitHub 安装本插件：
+在 DeepSeek Harness 的「插件」页点击「添加插件」，填入：
 
-```sh
-dsh plugin --profile <profile> add github:chofuhoyu/dsh-bark-reminder
+```text
+github:chofuhoyu/dsh-bark-reminder
 ```
 
-也可以在侧边栏「插件」页的安装框中填入 `github:chofuhoyu/dsh-bark-reminder`，由 Plugin Manager 完成安装并启用。
-
-安装后无需重启：Host 行和浏览器端会随 Plugin Manager 的安装流程激活。安装完成后打开「设置 → Bark 提醒」填写设备密钥。
-
-本地开发时，可以改为安装本仓库目录：
+也可以直接用 CLI 安装到 `web` profile：
 
 ```sh
-dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
+dsh plugin --profile web add github:chofuhoyu/dsh-bark-reminder
 ```
+
+安装后刷新 Web 页面。插件会：
+
+1. 插入 `bark-reminder` 插件入口（Host 半 + Client 半）；
+2. 由 Host 半监听审批、提问、一轮结束和运行错误事件，按场景调用 Bark 推送；
+3. 由 Client 半在「设置」中注册「Bark 提醒」配置页。
+
+推送依赖 Bark App 的设备密钥；安装后打开「设置 → Bark 提醒」填写，未填写时提醒会被跳过。
+
+本地开发时可以把 `github:chofuhoyu/dsh-bark-reminder` 换成仓库目录的绝对路径。
 
 ## 提醒场景
 
