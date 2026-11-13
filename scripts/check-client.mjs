@@ -5,7 +5,9 @@
  * - the bundle parses and its factory registers a Cordis plugin through the
  *   module loader;
  * - every `t('literal')` used by the page exists in both dictionaries;
- * - the page's variable list matches the Host's template variables.
+ * - the page's variable list matches the Host's template variables;
+ * - every variable has a label, a description, and an example in both
+ *   dictionaries, and the examples match the Host's own sample render.
  *
  * Run with `node scripts/check-client.mjs`.
  */
@@ -21,6 +23,7 @@ const reactStub = {
   createElement() {},
   useCallback: value => value,
   useEffect() {},
+  useLayoutEffect() {},
   useRef: () => ({ current: null }),
   useState: value => [value, () => {}],
 }
@@ -75,26 +78,67 @@ const source = await readFile(CLIENT_PATH, 'utf8')
 const literalKeys = new Set()
 for (const match of source.matchAll(/\bt\('([^']+)'\)/g)) literalKeys.add(match[1])
 
-const missing = []
+const problems = []
 for (const key of literalKeys) {
   for (const language of languages) {
-    if (!(key in dicts[language])) missing.push(`${language}:${key}`)
+    if (!(key in dicts[language])) problems.push(`${language}:${key} is missing`)
   }
 }
 
-const { TEMPLATE_VARIABLES } = await import(MESSAGES_PATH)
-const declaredVariables = new Set()
-for (const match of source.matchAll(/'var\.([A-Za-z0-9_]+)'|t\(`var\.\$\{name\}`\)/g)) {
-  if (match[1] !== undefined) declaredVariables.add(match[1])
+const { TEMPLATE_VARIABLES, renderNotification, sampleVars } = await import(MESSAGES_PATH)
+const listMatch = source.match(/const VARIABLES = \[([\s\S]*?)\]/)
+const pageVariables = listMatch === null
+  ? []
+  : [...listMatch[1].matchAll(/'([A-Za-z0-9_]+)'/g)].map(match => match[1])
+if (pageVariables.join(',') !== TEMPLATE_VARIABLES.join(',')) {
+  problems.push(`page variables do not match the Host: ${pageVariables.join(', ')}`)
 }
 for (const name of TEMPLATE_VARIABLES) {
   for (const language of languages) {
-    if (!(`var.${name}` in dicts[language])) missing.push(`${language}:var.${name}`)
+    for (const suffix of ['', 'Desc', 'Example']) {
+      const key = `var.${name}${suffix}`
+      const value = dicts[language][key]
+      if (typeof value !== 'string' || value === '') problems.push(`${language}:${key} is missing`)
+    }
   }
 }
 
-if (missing.length > 0) {
-  console.error(`missing locale keys:\n${missing.join('\n')}`)
+// The hover cards must keep showing the same values the Host renders for its
+// own preview, so copy changes on either side show up here.
+for (const language of languages) {
+  if (language !== 'zh' && language !== 'en') continue
+  const vars = sampleVars(language, '2026-11-13 13:54', 'MacBook-Pro')
+  const review = renderNotification('review', vars, {
+    titleTemplate: '',
+    bodyTemplate: '',
+    messageLocale: language,
+  })
+  const expected = {
+    kindLabel: review.kindLabel,
+    detail: review.detail,
+    sessionTitle: vars.sessionTitle,
+    project: vars.project,
+    cwd: vars.cwd,
+    tool: vars.tool,
+    reason: vars.reason,
+    question: vars.question,
+    mode: vars.mode,
+    error: vars.error,
+    time: vars.time,
+    host: vars.host,
+    turn: String(vars.turn),
+    goal: vars.goal,
+  }
+  for (const name of TEMPLATE_VARIABLES) {
+    const key = `var.${name}Example`
+    if (String(dicts[language][key]) !== String(expected[name])) {
+      problems.push(`${language}:${key} does not match the Host sample`)
+    }
+  }
+}
+
+if (problems.length > 0) {
+  console.error(`client check failed:\n${problems.join('\n')}`)
   process.exitCode = 1
 }
 

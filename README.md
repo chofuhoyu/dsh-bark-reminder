@@ -77,6 +77,8 @@ dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
 2. **Bark 服务器**：默认 `https://api.day.app`；自建 bark-server 请填写自己的地址（支持带路径的反向代理）。
 3. **提醒场景**：按场景启用；可包含子代理。
 4. **消息内容**：标题与正文模板、消息语言、变量插入、实时预览、恢复默认。默认标题为 `[DSH]` 加会话标题，正文只包含自动生成的说明，不包含时间。
+   变量按钮会插入到当前聚焦的标题或正文中的光标处，并替换选中的文本；插入可用 `⌘Z`（Windows/Linux 为 `Ctrl+Z`）撤销。
+   悬停或键盘聚焦变量按钮会展开说明卡片，展示该变量的用途和示例。
 5. **通知样式**：提醒级别（默认普通）、铃声、分组、图标（默认项目图标）、点击打开的链接、持续响铃、保存到历史。
 6. **频率与去重**：去重窗口、每分钟上限。
 7. **发送测试**：使用当前设置发送一条测试通知。
@@ -86,7 +88,8 @@ dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
 
 ### 模板变量
 
-标题和正文均支持占位符，未知占位符会原样保留（便于发现拼写错误）：
+标题和正文均支持占位符，未知占位符会原样保留（便于发现拼写错误）。变量按钮插入到当前聚焦的标题或正文，
+每个变量都有悬停说明和示例；变量在对应事件中不可用时渲染为空：
 
 | 变量 | 内容 |
 | --- | --- |
@@ -156,7 +159,7 @@ Host 通过 Connection 注册认证路由（仅本机 owner peer 可访问）：
 仅导入 Node 内置模块和相对文件；配置的默认值、校验和页面保存共用 `host/config.js`。
 
 ```sh
-node scripts/check-client.mjs   # 解析 client.js，校验两种语言的关键字与变量、注册数量
+node scripts/check-client.mjs   # 解析 client.js，校验两种语言的关键字、变量的说明与示例、注册数量
 node scripts/smoke.mjs          # 在模拟服务下运行审批/提问/一轮结束/错误/路由的端到端逻辑
 node --check index.js           # 逐个检查其余文件的语法
 ```

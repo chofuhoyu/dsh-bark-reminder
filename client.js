@@ -10,7 +10,7 @@ window.__ModuleLoader__.load({
   factory(require) {
     const React = require('react')
     const h = React.createElement
-    const { useCallback, useEffect, useRef, useState } = React
+    const { useCallback, useEffect, useLayoutEffect, useRef, useState } = React
 
     /** Locale namespace owned by this plugin. */
     const NS = 'bark-reminder'
@@ -103,7 +103,13 @@ window.__ModuleLoader__.load({
       'content.desc': 'Titles and bodies support the variables below; empty fields use the default copy.',
       'content.titleLabel': 'Title',
       'content.bodyLabel': 'Body',
-      'content.vars': 'Insert into the body',
+      'content.vars': 'Insert a variable',
+      'content.varsTarget': 'Inserting into',
+      'content.targetTitle': 'Title',
+      'content.targetBody': 'Body',
+      'content.varsHint': 'Click the title or body first, then a variable. It lands at the caret and can be undone with ⌘Z or Ctrl+Z. Hover or focus a variable for its description and example.',
+      'content.varsNote': 'Variables render empty when they do not apply; unknown names are kept as typed.',
+      'content.example': 'Example',
       'content.preview': 'Preview',
       'content.reset': 'Restore defaults',
       'content.locale': 'Message language',
@@ -111,19 +117,47 @@ window.__ModuleLoader__.load({
       'content.langZh': '中文',
       'content.langEn': 'English',
       'var.kindLabel': 'Event label',
+      'var.kindLabelDesc': 'The event label for this reminder; it follows the message language.',
+      'var.kindLabelExample': 'Auto review declined a step',
       'var.detail': 'Generated detail',
+      'var.detailDesc': 'The generated detail with the tool, reason, or question; this is the default body.',
+      'var.detailExample': 'Auto review did not approve bash; your decision is required.\nDrops stale rows from the production database',
       'var.sessionTitle': 'Session title',
+      'var.sessionTitleDesc': 'The session title, falling back to the project folder name.',
+      'var.sessionTitleExample': 'Refactor the login flow',
       'var.project': 'Project',
+      'var.projectDesc': 'Name of the project folder for this session.',
+      'var.projectExample': 'dsh-bark-reminder',
       'var.cwd': 'Working directory',
+      'var.cwdDesc': 'Full working directory of the session.',
+      'var.cwdExample': '/Users/you/Code/dsh-bark-reminder',
       'var.tool': 'Tool',
+      'var.toolDesc': 'Name of the tool that triggered the reminder.',
+      'var.toolExample': 'bash',
       'var.reason': 'Reason',
+      'var.reasonDesc': 'Approval reason, auto-review note, or escalation explanation.',
+      'var.reasonExample': 'Drops stale rows from the production database',
       'var.question': 'Question',
+      'var.questionDesc': 'The first pending question.',
+      'var.questionExample': 'Which database should the migration use?',
       'var.mode': 'Sandbox mode',
+      'var.modeDesc': 'The sandbox mode the model requested.',
+      'var.modeExample': 'danger-full-access',
       'var.error': 'Error',
+      'var.errorDesc': 'The error that stopped the session.',
+      'var.errorExample': 'Model request failed after three retries',
       'var.time': 'Time',
+      'var.timeDesc': 'Local time when the notification was rendered; unused by default.',
+      'var.timeExample': '2026-11-13 13:54',
       'var.host': 'Host name',
+      'var.hostDesc': 'Name of the machine running DSH.',
+      'var.hostExample': 'MacBook-Pro',
       'var.turn': 'Turn',
+      'var.turnDesc': 'Current turn number.',
+      'var.turnExample': '4',
       'var.goal': 'Goal',
+      'var.goalDesc': 'Text of the associated goal.',
+      'var.goalExample': 'Ship the notification plugin',
       'style.title': 'Notification style',
       'style.level': 'Interruption level',
       'style.levelDesc': 'Normal delivers as usual. Time sensitive can break through Focus. Quiet only adds the notification to Notification Center. Critical ignores mute and Do Not Disturb.',
@@ -249,7 +283,13 @@ window.__ModuleLoader__.load({
       'content.desc': '标题和正文支持以下变量；留空时使用默认文案。',
       'content.titleLabel': '标题',
       'content.bodyLabel': '正文',
-      'content.vars': '插入到正文',
+      'content.vars': '插入变量',
+      'content.varsTarget': '插入到',
+      'content.targetTitle': '标题',
+      'content.targetBody': '正文',
+      'content.varsHint': '先点击标题或正文，再点变量；会插入到光标处，可用 ⌘Z 或 Ctrl+Z 撤销。悬停或聚焦变量可查看说明与示例。',
+      'content.varsNote': '变量在不适用的场景中为空；未知变量会原样保留。',
+      'content.example': '示例',
       'content.preview': '预览',
       'content.reset': '恢复默认',
       'content.locale': '消息语言',
@@ -257,19 +297,47 @@ window.__ModuleLoader__.load({
       'content.langZh': '中文',
       'content.langEn': 'English',
       'var.kindLabel': '场景名称',
+      'var.kindLabelDesc': '本次提醒的场景名称，随消息语言变化。',
+      'var.kindLabelExample': '自动审查拦下了一项操作',
       'var.detail': '自动说明',
+      'var.detailDesc': '自动生成的完整说明，包含工具名、理由或问题；默认正文就是它。',
+      'var.detailExample': '自动审查未放行 bash，需要你决定是否继续。\n删除生产库里的旧数据',
       'var.sessionTitle': '会话标题',
+      'var.sessionTitleDesc': '会话标题；无法获取时回退为项目目录名。',
+      'var.sessionTitleExample': '重构登录流程',
       'var.project': '项目名',
+      'var.projectDesc': '会话所属项目目录的名称。',
+      'var.projectExample': 'dsh-bark-reminder',
       'var.cwd': '工作目录',
+      'var.cwdDesc': '会话的完整工作目录。',
+      'var.cwdExample': '/Users/you/Code/dsh-bark-reminder',
       'var.tool': '工具名',
+      'var.toolDesc': '触发提醒的工具名。',
+      'var.toolExample': 'bash',
       'var.reason': '原因',
+      'var.reasonDesc': '审批理由、自动审查意见或提权说明。',
+      'var.reasonExample': '删除生产库里的旧数据',
       'var.question': '问题',
+      'var.questionDesc': '第一个待回答的问题。',
+      'var.questionExample': '迁移要使用哪个数据库？',
       'var.mode': '沙盒模式',
+      'var.modeDesc': '模型申请的沙盒模式。',
+      'var.modeExample': 'danger-full-access',
       'var.error': '错误',
+      'var.errorDesc': '导致会话停止的错误信息。',
+      'var.errorExample': '模型请求连续三次失败',
       'var.time': '时间',
+      'var.timeDesc': '生成通知时的本地时间；默认模板不使用。',
+      'var.timeExample': '2026-11-13 13:54',
       'var.host': '主机名',
+      'var.hostDesc': '运行 DSH 的机器名。',
+      'var.hostExample': 'MacBook-Pro',
       'var.turn': '轮次',
+      'var.turnDesc': '当前轮次编号。',
+      'var.turnExample': '4',
       'var.goal': '目标',
+      'var.goalDesc': '关联目标的文本。',
+      'var.goalExample': '完成提醒插件',
       'style.title': '通知样式',
       'style.level': '提醒级别',
       'style.levelDesc': '普通：正常提醒；时效性：可穿透专注模式；静默：仅加入通知中心；紧急：忽略静音与勿扰。',
@@ -361,10 +429,29 @@ window.__ModuleLoader__.load({
 .bark-tile-copy { min-width:0; }
 .bark-tile-label { font-size:13px; line-height:19px; }
 .bark-tile-desc { margin-top:2px; font-size:12px; line-height:17px; color:var(--dsw-alias-label-secondary); }
+.bark-vars { padding:12px 0; border-bottom:0.5px solid var(--dsw-alias-border-l1); }
+.bark-vars-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.bark-vars-title { font-size:13px; line-height:19px; }
+.bark-vars-target { font-size:12px; line-height:18px; color:var(--dsw-alias-label-tertiary); }
+.bark-vars-target strong { font-weight:500; color:var(--dsw-alias-label-secondary); }
 .bark-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
 .bark-chip { border:0.5px solid var(--dsw-alias-border-l2); border-radius:999px; background:transparent; color:var(--dsw-alias-label-secondary); font-family:inherit; font-size:12px; line-height:18px; padding:2px 9px; cursor:pointer; }
 .bark-chip:hover { background:var(--dsw-alias-interactive-bg-hover); color:var(--dsw-alias-label-primary); }
-.bark-preview { margin-top:8px; padding:10px 12px; border:0.5px dashed var(--dsw-alias-border-l3); border-radius:var(--dsw-radius-md); background:var(--dsw-alias-bg-layer-1); }
+.bark-chip[data-active='true'] { border-color:var(--dsw-alias-state-business-primary); color:var(--dsw-alias-label-primary); }
+.bark-chip:focus-visible { outline:2px solid var(--dsw-alias-state-business-primary); outline-offset:1px; }
+.bark-var { display:inline-flex; }
+.bark-var-card { position:fixed; z-index:80; box-sizing:border-box; width:280px; max-width:calc(100vw - 16px); display:flex; flex-direction:column; gap:6px; padding:10px 12px; border:0.5px solid var(--dsw-alias-border-l3); border-radius:var(--dsw-radius-lg); background:var(--dsw-alias-settings-card-fill); box-shadow:var(--dsw-shadow-lv2); pointer-events:none; }
+.bark-var-card-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; }
+.bark-var-card-name { font-size:13px; line-height:19px; font-weight:500; color:var(--dsw-alias-label-primary); }
+.bark-var-card-desc { margin:0; font-size:12px; line-height:18px; color:var(--dsw-alias-label-secondary); }
+.bark-var-example { display:flex; flex-direction:column; gap:2px; padding:6px 8px; border:0.5px solid var(--dsw-alias-border-l2); border-radius:var(--dsw-radius-md); background:var(--dsw-alias-bg-layer-1); }
+.bark-var-example-label { font-size:11px; line-height:16px; color:var(--dsw-alias-label-tertiary); }
+.bark-var-example-value { font-size:12px; line-height:18px; white-space:pre-wrap; word-break:break-word; color:var(--dsw-alias-label-primary); }
+.bark-visually-hidden { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; border:0; }
+.bark-vars-note { margin-top:6px; }
+.bark-content-tail { padding:12px 0; }
+.bark-content-actions { display:flex; justify-content:flex-end; margin-top:8px; }
+.bark-preview { padding:10px 12px; border:0.5px dashed var(--dsw-alias-border-l3); border-radius:var(--dsw-radius-md); background:var(--dsw-alias-bg-layer-1); }
 .bark-preview-label { font-size:12px; line-height:18px; color:var(--dsw-alias-label-tertiary); margin-bottom:6px; }
 .bark-preview-title { font-size:14px; line-height:20px; font-weight:500; }
 .bark-preview-body { margin:6px 0 0; font-family:inherit; font-size:13px; line-height:20px; white-space:pre-wrap; word-break:break-word; color:var(--dsw-alias-label-secondary); }
@@ -608,6 +695,40 @@ window.__ModuleLoader__.load({
         h(Switch, { checked, label, onChange }))
     }
 
+    /** One template variable chip; clicking it inserts, hovering opens a sample. */
+    function VariableChip({ name, label, description, example, exampleLabel, active, onOpen, onClose, onInsert }) {
+      const buttonRef = useRef(null)
+      const token = `{${name}}`
+      const descriptionId = `bark-var-desc-${name}`
+      const open = useCallback(() => {
+        if (buttonRef.current !== null) onOpen(name, buttonRef.current)
+      }, [name, onOpen])
+
+      return h('div', {
+        className: 'bark-var',
+        onMouseEnter: open,
+        onMouseLeave: () => onClose(name),
+      },
+      h('button', {
+        ref: buttonRef,
+        type: 'button',
+        className: 'bark-chip',
+        'data-active': active ? 'true' : undefined,
+        'aria-describedby': descriptionId,
+        onMouseDown: event => event.preventDefault(),
+        onFocus: open,
+        onBlur: () => onClose(name),
+        onClick: () => {
+          onInsert(name)
+          onClose(name)
+        },
+      }, label),
+      h('span', {
+        id: descriptionId,
+        className: 'bark-visually-hidden',
+      }, `${label} (${token}). ${description} ${exampleLabel}: ${example}`))
+    }
+
     /** One inline notice line. */
     function Notice({ kind = 'success', children }) {
       return h('div', { className: `bark-notice ${kind}`, role: 'status' }, children)
@@ -630,7 +751,16 @@ window.__ModuleLoader__.load({
       const [testing, setTesting] = useState(false)
       const [testResult, setTestResult] = useState(undefined)
       const [preview, setPreview] = useState(undefined)
+      const [insertTarget, setInsertTarget] = useState('body')
+      const [variableHint, setVariableHint] = useState(undefined)
+      const titleRef = useRef(null)
       const bodyRef = useRef(null)
+      const variableCardRef = useRef(null)
+      // The last title/body field to hold a caret, used when the click happens
+      // while focus sits somewhere else in the page.
+      const lastFieldRef = useRef(null)
+      const selectionRef = useRef({ title: null, body: null })
+      const insertTargetRef = useRef(insertTarget)
       // Mirrors of the editable state for the debounced writer and for the
       // write still owed when the section unmounts.
       const formRef = useRef(form)
@@ -640,6 +770,7 @@ window.__ModuleLoader__.load({
       const mountedRef = useRef(true)
       formRef.current = form
       savedFormRef.current = savedForm
+      insertTargetRef.current = insertTarget
 
       const load = useCallback(async (options) => {
         const keepForm = options === true
@@ -701,28 +832,135 @@ window.__ModuleLoader__.load({
         setNotice(undefined)
       }, [])
 
-      const insertVariable = useCallback((name) => {
-        setForm((current) => {
-          if (current === undefined) return current
-          const token = `{${name}}`
-          const element = bodyRef.current
-          const start = element !== null && element !== undefined && typeof element.selectionStart === 'number'
-            ? element.selectionStart
-            : current.bodyTemplate.length
-          const end = element !== null && element !== undefined && typeof element.selectionEnd === 'number'
-            ? element.selectionEnd
-            : start
-          const nextBody = `${current.bodyTemplate.slice(0, start)}${token}${current.bodyTemplate.slice(end)}`
-          if (element !== null && element !== undefined) {
-            requestAnimationFrame(() => {
-              element.focus()
-              element.setSelectionRange(start + token.length, start + token.length)
-            })
-          }
-          return { ...current, bodyTemplate: nextBody }
-        })
-        setNotice(undefined)
+      const rememberSelection = useCallback((field) => {
+        const element = field === 'title' ? titleRef.current : bodyRef.current
+        if (element === null || typeof element.selectionStart !== 'number') return
+        selectionRef.current[field] = {
+          start: element.selectionStart,
+          end: typeof element.selectionEnd === 'number' ? element.selectionEnd : element.selectionStart,
+        }
       }, [])
+
+      const focusVariableTarget = useCallback((field) => {
+        lastFieldRef.current = field
+        setInsertTarget(field)
+        rememberSelection(field)
+      }, [rememberSelection])
+
+      // Insert at the caret through the browser's own editing command so the
+      // change lands on the native undo stack; React then adopts the DOM value.
+      const insertVariable = useCallback((name) => {
+        const current = formRef.current
+        if (current === undefined) return
+        const active = document.activeElement
+        const field = active === titleRef.current
+          ? 'title'
+          : active === bodyRef.current
+            ? 'body'
+            : insertTargetRef.current
+        const element = field === 'title' ? titleRef.current : bodyRef.current
+        if (element === null) return
+        const previous = field === 'title' ? current.titleTemplate : current.bodyTemplate
+        const lastField = lastFieldRef.current
+        if (active !== element) {
+          const remembered = lastField === field ? selectionRef.current[field] : null
+          const start = Math.min(remembered === null ? previous.length : remembered.start, previous.length)
+          const end = Math.min(Math.max(remembered === null ? start : remembered.end, start), previous.length)
+          element.focus()
+          try {
+            // Restore the caret the field last held; a field that never held
+            // focus gets the token appended instead of landing at offset zero.
+            element.setSelectionRange(start, end)
+          } catch {
+            // Not a text control; nothing to place.
+          }
+        }
+        const token = `{${name}}`
+        let inserted = false
+        try {
+          inserted = document.execCommand('insertText', false, token) === true
+        } catch {
+          inserted = false
+        }
+        let next = element.value
+        // A successful replacement can leave the value unchanged when the
+        // selected text already equals the token; branch on the command result,
+        // not on the value, or that click would insert a second copy.
+        if (inserted !== true && next === previous) {
+          // The editing command is unavailable or refused; insert directly.
+          // Only this fallback loses the native undo entry.
+          const start = typeof element.selectionStart === 'number' ? element.selectionStart : previous.length
+          const end = typeof element.selectionEnd === 'number' ? element.selectionEnd : start
+          element.setRangeText(token, start, end, 'end')
+          next = element.value
+        }
+        if (next !== previous) {
+          update(field === 'title' ? { titleTemplate: next } : { bodyTemplate: next })
+        }
+        rememberSelection(field)
+      }, [update, rememberSelection])
+
+      const openVariableHint = useCallback((name, element) => {
+        const rect = element.getBoundingClientRect()
+        const viewportWidth = document.documentElement.clientWidth
+        const width = Math.min(280, viewportWidth - 16)
+        const left = Math.min(
+          Math.max(8, rect.left + rect.width / 2 - width / 2),
+          Math.max(8, viewportWidth - width - 8),
+        )
+        setVariableHint({
+          name,
+          width,
+          left,
+          top: 0,
+          measured: false,
+          anchorTop: rect.top,
+          anchorBottom: rect.bottom,
+        })
+      }, [])
+
+      const closeVariableHint = useCallback((name) => {
+        setVariableHint((current) => {
+          if (current === undefined) return current
+          if (name !== undefined && current.name !== name) return current
+          return undefined
+        })
+      }, [])
+
+      // The card is measured before paint so a tall card flips below its chip
+      // instead of running off the top of the viewport.
+      useLayoutEffect(() => {
+        const card = variableCardRef.current
+        if (variableHint === undefined || variableHint.measured || card === null) return
+        const height = card.offsetHeight
+        const viewportHeight = document.documentElement.clientHeight
+        const aboveSpace = variableHint.anchorTop - 8
+        const belowSpace = viewportHeight - variableHint.anchorBottom - 8
+        const below = aboveSpace < height && belowSpace >= aboveSpace
+        const top = below
+          ? Math.min(variableHint.anchorBottom + 8, Math.max(8, viewportHeight - height - 8))
+          : Math.max(8, variableHint.anchorTop - height - 8)
+        setVariableHint((current) => (current === undefined || current.measured
+          ? current
+          : { ...current, top, measured: true }))
+      }, [variableHint])
+
+      const variableHintOpen = variableHint !== undefined
+      useEffect(() => {
+        if (!variableHintOpen) return undefined
+        const dismiss = () => setVariableHint(undefined)
+        const onKeyDown = (event) => {
+          if (event.key === 'Escape') dismiss()
+        }
+        window.addEventListener('scroll', dismiss, true)
+        window.addEventListener('resize', dismiss)
+        window.addEventListener('keydown', onKeyDown)
+        return () => {
+          window.removeEventListener('scroll', dismiss, true)
+          window.removeEventListener('resize', dismiss)
+          window.removeEventListener('keydown', onKeyDown)
+        }
+      }, [variableHintOpen])
 
       const saveKey = useCallback(async (clear) => {
         const candidate = keyDraft.trim()
@@ -1020,7 +1258,10 @@ window.__ModuleLoader__.load({
               className: 'bark-input',
               type: 'text',
               value: form.titleTemplate,
+              ref: titleRef,
               'aria-label': t('content.titleLabel'),
+              onFocus: () => focusVariableTarget('title'),
+              onSelect: () => rememberSelection('title'),
               onChange: event => update({ titleTemplate: event.target.value }),
             })),
           h(Row, { label: t('content.bodyLabel'), stack: true },
@@ -1030,24 +1271,37 @@ window.__ModuleLoader__.load({
               value: form.bodyTemplate,
               ref: bodyRef,
               'aria-label': t('content.bodyLabel'),
+              onFocus: () => focusVariableTarget('body'),
+              onSelect: () => rememberSelection('body'),
               onChange: event => update({ bodyTemplate: event.target.value }),
-            }),
-            h('div', {
-              style: { display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px' },
-            },
-            h('span', { className: 'bark-hint' }, t('content.vars')),
-            ...VARIABLES.map(name => h('button', {
-              key: name,
-              type: 'button',
-              className: 'bark-chip',
-              title: `{${name}}`,
-              onClick: () => insertVariable(name),
-            }, t(`var.${name}`)))),
+            })),
+          h('div', { className: 'bark-vars' },
+            h('div', { className: 'bark-vars-head' },
+              h('span', { className: 'bark-vars-title' }, t('content.vars')),
+              h('span', { className: 'bark-vars-target', role: 'status', 'aria-live': 'polite' },
+                `${t('content.varsTarget')} `,
+                h('strong', null, insertTarget === 'title' ? t('content.targetTitle') : t('content.targetBody')))),
+            h('div', { className: 'bark-hint bark-vars-note' }, t('content.varsHint')),
+            h('div', { className: 'bark-chips' },
+              ...VARIABLES.map(name => h(VariableChip, {
+                key: name,
+                name,
+                label: t(`var.${name}`),
+                description: t(`var.${name}Desc`),
+                example: t(`var.${name}Example`),
+                exampleLabel: t('content.example'),
+                active: variableHint?.name === name,
+                onOpen: openVariableHint,
+                onClose: closeVariableHint,
+                onInsert: insertVariable,
+              }))),
+            h('div', { className: 'bark-hint bark-vars-note' }, t('content.varsNote'))),
+          h('div', { className: 'bark-content-tail' },
             h('div', { className: 'bark-preview' },
               h('div', { className: 'bark-preview-label' }, t('content.preview')),
               h('div', { className: 'bark-preview-title' }, preview?.title ?? ''),
               h('pre', { className: 'bark-preview-body' }, preview?.body ?? '')),
-            h('div', { style: { display: 'flex', justifyContent: 'flex-end', marginTop: '8px' } },
+            h('div', { className: 'bark-content-actions' },
               h('button', {
                 type: 'button',
                 className: 'bark-btn small',
@@ -1164,7 +1418,26 @@ window.__ModuleLoader__.load({
           notice !== undefined
             ? h(Notice, { kind: notice.kind }, notice.text)
             : h('span', { className: 'bark-hint' },
-              saving ? t('save.saving') : dirty ? t('save.pending') : t('save.clean'))))
+              saving ? t('save.saving') : dirty ? t('save.pending') : t('save.clean'))),
+
+        variableHint === undefined ? null : h('div', {
+          ref: variableCardRef,
+          className: 'bark-var-card',
+          'aria-hidden': 'true',
+          style: {
+            width: `${variableHint.width}px`,
+            left: `${variableHint.left}px`,
+            top: `${variableHint.top}px`,
+            visibility: variableHint.measured ? 'visible' : 'hidden',
+          },
+        },
+        h('div', { className: 'bark-var-card-head' },
+          h('span', { className: 'bark-var-card-name' }, t(`var.${variableHint.name}`)),
+          h('code', { className: 'bark-code' }, `{${variableHint.name}}`)),
+        h('p', { className: 'bark-var-card-desc' }, t(`var.${variableHint.name}Desc`)),
+        h('div', { className: 'bark-var-example' },
+          h('span', { className: 'bark-var-example-label' }, t('content.example')),
+          h('span', { className: 'bark-var-example-value' }, t(`var.${variableHint.name}Example`)))))
     }
 
     /** Nav glyph for the settings section. */
