@@ -1,6 +1,6 @@
 {
   "name": "dsh-bark-reminder",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "description": "Push Bark notifications to your iPhone when DeepSeek Harness needs you: approvals, auto-review feedback, sandbox escalation, questions, and finished sessions.",
   "keywords": [
