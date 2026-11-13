@@ -3,8 +3,8 @@
  * and template rendering. Templates are user-owned; the detail is generated so
  * a notification still reads correctly when a template is replaced.
  *
- * The default copy carries no clock: iOS already stamps every notification with
- * its delivery time, so the body spends its lines on what actually happened.
+ * The default copy omits the timestamp: iOS already displays the delivery time,
+ * so the body is reserved for the event and its context.
  */
 
 import { truncate } from './config.js'
@@ -13,86 +13,86 @@ import { truncate } from './config.js'
 const KIND_TEXT = {
   zh: {
     approval: {
-      label: '有一步需要你确认',
-      detail: vars => [`DSH 想用 ${vars.tool || '一个工具'}，等你确认。`, vars.reason].filter(Boolean).join('\n'),
+      label: '有一项操作待确认',
+      detail: vars => [`DSH 请求使用 ${vars.tool || '一项工具'}，需要你的确认。`, vars.reason].filter(Boolean).join('\n'),
     },
     review: {
-      label: '自动审查拦下了一步',
+      label: '自动审查拦下了一项操作',
       detail: vars => [
-        `自动审查没放行 ${vars.tool || '这一步'}，等你决定要不要继续。`,
+        `自动审查未放行 ${vars.tool || '此项操作'}，需要你决定是否继续。`,
         vars.reason,
       ].filter(Boolean).join('\n'),
     },
     escalation: {
-      label: '模型想申请更大权限',
-      detail: vars => [`模型想申请 ${vars.mode || '更高'} 的沙盒权限。`, vars.reason].filter(Boolean).join('\n'),
+      label: '沙盒权限申请',
+      detail: vars => [`模型申请将沙盒权限提升至 ${vars.mode || '更高等级'}。`, vars.reason].filter(Boolean).join('\n'),
     },
     question: {
-      label: '有个问题等你回答',
+      label: '问题待回答',
       detail: vars => [
-        `DSH 想问你：${vars.question || '一个问题'}`,
-        vars.questionCount > 1 ? `还有 ${vars.questionCount - 1} 个问题在排队。` : '',
+        `DSH 需要你的回答：${vars.question || '一个问题'}`,
+        vars.questionCount > 1 ? `另有 ${vars.questionCount - 1} 个问题待回答。` : '',
         vars.requestDetail,
       ].filter(Boolean).join('\n'),
     },
     idle: {
-      label: '这一轮结束了',
+      label: '本轮已结束',
       detail: vars => {
-        if (vars.goalPhase === 'complete') return '目标完成了，结果可以看了。'
-        if (vars.goalPhase === 'blocked') return `目标卡住了：${vars.goalReason || '需要你处理一下'}`
-        if (vars.goalPhase === 'paused') return '目标暂停了，等你回来处理。'
-        return 'DSH 在等你的下一步。'
+        if (vars.goalPhase === 'complete') return '目标已完成，结果可供查看。'
+        if (vars.goalPhase === 'blocked') return `目标受阻：${vars.goalReason || '需要你处理'}`
+        if (vars.goalPhase === 'paused') return '目标已暂停，等待你的处理。'
+        return 'DSH 正在等待你的下一步。'
       },
     },
     error: {
-      label: '运行出错了',
-      detail: vars => `DSH 因为出错停了下来：${vars.error || '原因不明'}`,
+      label: '运行出错',
+      detail: vars => `DSH 因错误停止：${vars.error || '原因不明'}`,
     },
     test: {
       label: '测试通知',
-      detail: () => '推送通了。以后 DSH 需要你，就会这样提醒你。',
+      detail: () => '推送链路正常。当 DSH 需要你时，将以相同方式提醒。',
     },
   },
   en: {
     approval: {
-      label: 'A step needs your approval',
-      detail: vars => [`DSH wants to use ${vars.tool || 'a tool'} and is waiting for your okay.`, vars.reason].filter(Boolean).join('\n'),
+      label: 'Approval requested',
+      detail: vars => [`DSH requests to use ${vars.tool || 'a tool'} and is waiting for your approval.`, vars.reason].filter(Boolean).join('\n'),
     },
     review: {
-      label: 'Auto review stopped a step',
+      label: 'Auto review declined a step',
       detail: vars => [
-        `Auto review did not clear ${vars.tool || 'this step'}; the call is yours.`,
+        `Auto review did not approve ${vars.tool || 'this step'}; your decision is required.`,
         vars.reason,
       ].filter(Boolean).join('\n'),
     },
     escalation: {
-      label: 'Wider access requested',
-      detail: vars => [`The model is asking for ${vars.mode || 'wider'} sandbox access.`, vars.reason].filter(Boolean).join('\n'),
+      label: 'Sandbox escalation requested',
+      detail: vars => [`The model requests the ${vars.mode || 'wider'} sandbox mode.`, vars.reason].filter(Boolean).join('\n'),
     },
     question: {
-      label: 'A question for you',
+      label: 'Question pending',
       detail: vars => [
-        `DSH wants to ask: ${vars.question || 'a question'}`,
-        vars.questionCount > 1 ? `${vars.questionCount - 1} more waiting.` : '',
+        `DSH is waiting for your answer: ${vars.question || 'a question'}`,
+        vars.questionCount > 1 ? `${vars.questionCount - 1} additional questions are pending.` : '',
         vars.requestDetail,
       ].filter(Boolean).join('\n'),
     },
     idle: {
       label: 'Turn finished',
       detail: vars => {
-        if (vars.goalPhase === 'complete') return 'The goal is done; the result is ready to look at.'
-        if (vars.goalPhase === 'blocked') return `The goal is stuck: ${vars.goalReason || 'it needs a hand'}`
-        if (vars.goalPhase === 'paused') return 'The goal is paused; it will wait for you.'
-        return 'DSH is waiting for your next step.'
+        if (vars.goalPhase === 'complete') return 'The goal is complete; the result is ready for review.'
+        if (vars.goalPhase === 'blocked') return `The goal is blocked: ${vars.goalReason || 'it requires your attention'}`
+        if (vars.goalPhase === 'paused') return 'The goal is paused and awaits your attention.'
+        return 'DSH is awaiting your next step.'
       },
     },
     error: {
-      label: 'Something went wrong',
+      label: 'Run failed',
       detail: vars => `DSH stopped with an error: ${vars.error || 'cause unknown'}`,
     },
     test: {
       label: 'Test notification',
-      detail: () => 'Delivery works. This is how DSH will reach you when it needs you.',
+      detail: () => 'Push delivery is working. DSH will notify you in the same way when it needs you.',
     },
   },
 }
