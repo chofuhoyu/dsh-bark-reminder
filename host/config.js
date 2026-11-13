@@ -15,7 +15,7 @@ export const DEVICE_KEY_REF = 'BARK_DEVICE_KEY'
 /**
  * Default notification icon, served from this repository's raw address.
  * Bark downloads the URL on the device and hands the bytes to iOS, which does
- * not decode SVG, so this points at the PNG twin of `icon.svg`.
+ * not decode SVG, so this points at the full-bleed PNG rendering of the bell.
  */
 export const DEFAULT_ICON_URL = 'https://raw.githubusercontent.com/chofuhoyu/dsh-bark-reminder/main/icon.png'
 
