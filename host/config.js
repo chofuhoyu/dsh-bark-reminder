@@ -12,8 +12,8 @@
 /** Credential reference holding the Bark device key; also honoured as an environment variable. */
 export const DEVICE_KEY_REF = 'BARK_DEVICE_KEY'
 
-/** Bark interruption levels, in escalating prominence. */
-export const LEVELS = ['active', 'timeSensitive', 'passive', 'critical']
+/** Bark interruption levels, from quietest to most prominent. */
+export const LEVELS = ['passive', 'active', 'timeSensitive', 'critical']
 
 /** Languages the push copy itself is written in (independent of the page locale). */
 export const MESSAGE_LOCALES = ['zh', 'en']
@@ -50,7 +50,7 @@ export const DEFAULT_CONFIG = Object.freeze({
   // session. iOS already shows the delivery time, so the default omits it.
   titleTemplate: '{kindLabel}',
   bodyTemplate: '{detail}\n\n{sessionTitle}',
-  level: 'timeSensitive',
+  level: 'active',
   sound: '',
   group: 'DSH',
   icon: '',

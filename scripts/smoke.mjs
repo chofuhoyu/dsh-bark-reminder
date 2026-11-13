@@ -80,6 +80,11 @@ const defaults = resolveConfig(undefined)
 assert.equal(defaults.errors.length, 0)
 assert.equal(defaults.config.server, 'https://api.day.app')
 assert.equal(defaults.config.triggers.idle, true)
+assert.equal(defaults.config.level, 'active')
+
+const explicitLevel = resolveConfig({ level: 'timeSensitive' }, { strict: true })
+assert.equal(explicitLevel.errors.length, 0)
+assert.equal(explicitLevel.config.level, 'timeSensitive')
 
 const hardened = resolveConfig({ server: 'https://bark.example.com/', idleDelayMs: 5, maxPerMinute: 999 }, { strict: true })
 assert.equal(hardened.config.server, 'https://bark.example.com')
@@ -145,7 +150,7 @@ assert.equal(plain.reason, '允许这次编辑吗？')
   assert.equal(requests[0].body.device_key, 'device-key')
   assert.match(requests[0].body.title, /自动审查拦下了一步/)
   assert.match(requests[0].body.body, /Deletes production rows/)
-  assert.equal(requests[0].body.level, 'timeSensitive')
+  assert.equal(requests[0].body.level, 'active')
   assert.equal(requests[0].body.group, 'DSH')
 
   // The very same approval asked again inside the window is de-duplicated.

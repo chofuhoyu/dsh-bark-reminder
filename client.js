@@ -455,7 +455,7 @@ window.__ModuleLoader__.load({
         idleDelaySeconds: String(Math.round((Number(config.idleDelayMs) || 0) / 1000)),
         titleTemplate: typeof config.titleTemplate === 'string' ? config.titleTemplate : '',
         bodyTemplate: typeof config.bodyTemplate === 'string' ? config.bodyTemplate : '',
-        level: typeof config.level === 'string' ? config.level : 'timeSensitive',
+        level: typeof config.level === 'string' ? config.level : 'active',
         sound: typeof config.sound === 'string' ? config.sound : '',
         group: typeof config.group === 'string' ? config.group : '',
         icon: typeof config.icon === 'string' ? config.icon : '',
