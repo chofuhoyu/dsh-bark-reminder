@@ -3,7 +3,7 @@
 将 DeepSeek Harness 需要你处理的事项，通过 [Bark](https://bark.day.app) 推送到 iPhone。
 本项目是一个常规的 DSH bundle：Host 端监听会话事件，Client 端在「设置」中提供配置页。
 
-## 会提醒什么
+## 提醒场景
 
 | 场景 | 触发来源 | 说明 |
 | --- | --- | --- |
