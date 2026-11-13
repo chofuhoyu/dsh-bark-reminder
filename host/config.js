@@ -46,8 +46,10 @@ export const DEFAULT_CONFIG = Object.freeze({
   }),
   notifySubagents: false,
   idleDelayMs: 60_000,
-  titleTemplate: 'DSH · {kindLabel}',
-  bodyTemplate: '{detail}\n{sessionTitle} · {time}',
+  // One short line for the event, then the context that helps identify the
+  // session. iOS already shows the delivery time, so the default omits it.
+  titleTemplate: '{kindLabel}',
+  bodyTemplate: '{detail}\n\n{sessionTitle}',
   level: 'timeSensitive',
   sound: '',
   group: 'DSH',

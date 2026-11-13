@@ -2,6 +2,9 @@
  * Push copy: the fixed part of each notification (kind label and detail line)
  * and template rendering. Templates are user-owned; the detail is generated so
  * a notification still reads correctly when a template is replaced.
+ *
+ * The default copy carries no clock: iOS already stamps every notification with
+ * its delivery time, so the body spends its lines on what actually happened.
  */
 
 import { truncate } from './config.js'
@@ -10,86 +13,86 @@ import { truncate } from './config.js'
 const KIND_TEXT = {
   zh: {
     approval: {
-      label: '需要你批准',
-      detail: vars => [`${vars.tool || '工具调用'} 需要你的批准。`, vars.reason].filter(Boolean).join('\n'),
+      label: '有一步需要你确认',
+      detail: vars => [`DSH 想用 ${vars.tool || '一个工具'}，等你确认。`, vars.reason].filter(Boolean).join('\n'),
     },
     review: {
-      label: '自动审查有意见',
+      label: '自动审查拦下了一步',
       detail: vars => [
-        `自动审查器拒绝了 ${vars.tool || '一次工具调用'}，需要你决定是否放行。`,
+        `自动审查没放行 ${vars.tool || '这一步'}，等你决定要不要继续。`,
         vars.reason,
       ].filter(Boolean).join('\n'),
     },
     escalation: {
-      label: '申请沙盒权限',
-      detail: vars => [`模型申请 ${vars.mode || '更高'} 沙盒权限。`, vars.reason].filter(Boolean).join('\n'),
+      label: '模型想申请更大权限',
+      detail: vars => [`模型想申请 ${vars.mode || '更高'} 的沙盒权限。`, vars.reason].filter(Boolean).join('\n'),
     },
     question: {
-      label: '需要你回答',
+      label: '有个问题等你回答',
       detail: vars => [
-        `DSH 在等你回答：${vars.question || '一个问题'}`,
-        vars.questionCount > 1 ? `（还有 ${vars.questionCount - 1} 个问题）` : '',
+        `DSH 想问你：${vars.question || '一个问题'}`,
+        vars.questionCount > 1 ? `还有 ${vars.questionCount - 1} 个问题在排队。` : '',
         vars.requestDetail,
       ].filter(Boolean).join('\n'),
     },
     idle: {
-      label: '会话已结束',
+      label: '这一轮结束了',
       detail: vars => {
-        if (vars.goalPhase === 'complete') return '目标已完成，等你查看结果。'
-        if (vars.goalPhase === 'blocked') return `目标受阻：${vars.goalReason || '需要你的处理'}`
-        if (vars.goalPhase === 'paused') return '目标已暂停，需要你的处理。'
-        return '本轮已经结束，DSH 在等你的下一步。'
+        if (vars.goalPhase === 'complete') return '目标完成了，结果可以看了。'
+        if (vars.goalPhase === 'blocked') return `目标卡住了：${vars.goalReason || '需要你处理一下'}`
+        if (vars.goalPhase === 'paused') return '目标暂停了，等你回来处理。'
+        return 'DSH 在等你的下一步。'
       },
     },
     error: {
-      label: '会话出错',
-      detail: vars => `DSH 出错停止：${vars.error || '未知错误'}`,
+      label: '运行出错了',
+      detail: vars => `DSH 因为出错停了下来：${vars.error || '原因不明'}`,
     },
     test: {
       label: '测试通知',
-      detail: () => 'Bark 推送已经连通，DSH 需要你时就会提醒。',
+      detail: () => '推送通了。以后 DSH 需要你，就会这样提醒你。',
     },
   },
   en: {
     approval: {
-      label: 'Approval needed',
-      detail: vars => [`${vars.tool || 'A tool call'} needs your approval.`, vars.reason].filter(Boolean).join('\n'),
+      label: 'A step needs your approval',
+      detail: vars => [`DSH wants to use ${vars.tool || 'a tool'} and is waiting for your okay.`, vars.reason].filter(Boolean).join('\n'),
     },
     review: {
-      label: 'Auto review feedback',
+      label: 'Auto review stopped a step',
       detail: vars => [
-        `Auto review denied ${vars.tool || 'a tool call'}; your decision is required.`,
+        `Auto review did not clear ${vars.tool || 'this step'}; the call is yours.`,
         vars.reason,
       ].filter(Boolean).join('\n'),
     },
     escalation: {
-      label: 'Sandbox access requested',
-      detail: vars => [`The model requests ${vars.mode || 'wider'} sandbox access.`, vars.reason].filter(Boolean).join('\n'),
+      label: 'Wider access requested',
+      detail: vars => [`The model is asking for ${vars.mode || 'wider'} sandbox access.`, vars.reason].filter(Boolean).join('\n'),
     },
     question: {
-      label: 'Question waiting',
+      label: 'A question for you',
       detail: vars => [
-        `DSH is waiting for your answer: ${vars.question || 'a question'}`,
-        vars.questionCount > 1 ? `(${vars.questionCount - 1} more waiting)` : '',
+        `DSH wants to ask: ${vars.question || 'a question'}`,
+        vars.questionCount > 1 ? `${vars.questionCount - 1} more waiting.` : '',
         vars.requestDetail,
       ].filter(Boolean).join('\n'),
     },
     idle: {
-      label: 'Session finished',
+      label: 'Turn finished',
       detail: vars => {
-        if (vars.goalPhase === 'complete') return 'The goal is complete; the result is ready to review.'
-        if (vars.goalPhase === 'blocked') return `The goal is blocked: ${vars.goalReason || 'it needs your attention'}`
-        if (vars.goalPhase === 'paused') return 'The goal is paused and needs your attention.'
-        return 'This turn is over; DSH is waiting for your next step.'
+        if (vars.goalPhase === 'complete') return 'The goal is done; the result is ready to look at.'
+        if (vars.goalPhase === 'blocked') return `The goal is stuck: ${vars.goalReason || 'it needs a hand'}`
+        if (vars.goalPhase === 'paused') return 'The goal is paused; it will wait for you.'
+        return 'DSH is waiting for your next step.'
       },
     },
     error: {
-      label: 'Session error',
-      detail: vars => `DSH stopped with an error: ${vars.error || 'unknown error'}`,
+      label: 'Something went wrong',
+      detail: vars => `DSH stopped with an error: ${vars.error || 'cause unknown'}`,
     },
     test: {
       label: 'Test notification',
-      detail: () => 'Bark delivery works; DSH will ping you whenever it needs you.',
+      detail: () => 'Delivery works. This is how DSH will reach you when it needs you.',
     },
   },
 }
