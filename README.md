@@ -3,6 +3,24 @@
 将 DeepSeek Harness 需要你处理的事项，通过 [Bark](https://bark.day.app) 推送到 iPhone。
 本项目是一个常规的 DSH bundle：Host 端监听会话事件，Client 端在「设置」中提供配置页。
 
+## 安装
+
+从 GitHub 安装本插件：
+
+```sh
+dsh plugin --profile <profile> add github:chofuhoyu/dsh-bark-reminder
+```
+
+也可以在侧边栏「插件」页的安装框中填入 `github:chofuhoyu/dsh-bark-reminder`，由 Plugin Manager 完成安装并启用。
+
+安装后无需重启：Host 行和浏览器端会随 Plugin Manager 的安装流程激活。安装完成后打开「设置 → Bark 提醒」填写设备密钥。
+
+本地开发时，可以改为安装本仓库目录：
+
+```sh
+dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
+```
+
 ## 提醒场景
 
 | 场景 | 触发来源 | 说明 |
@@ -55,16 +73,6 @@ Bark 会在设备上下载该地址，并替换通知中默认的 Bark 图标（
 - iOS 会把通知图标裁成圆形，`icon.png` 的背景铺满整个画布，避免圆形边缘出现透明缺口。
 - 清空设置中的「图标」会回落到默认项目图标。
 - 默认地址指向本仓库 `main` 分支的 raw 链接；仓库公开后 Bark 才能匿名拉取。
-
-## 安装
-
-在 DSH 的「设置 → 插件」里添加本地目录，或在本仓库目录执行：
-
-```sh
-dsh plugin --profile <profile> add /absolute/path/to/dsh-bark-reminder
-```
-
-安装后无需重启：Host 行和浏览器端会随 Plugin Manager 的安装流程激活。
 
 ## 配置
 
