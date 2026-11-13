@@ -21,6 +21,7 @@
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg",
+    "./icon.png": "./icon.png",
     "./package.json": "./package.json"
   },
   "files": [
@@ -30,6 +31,7 @@
     "cordis.patch.yml",
     "locale/*.json",
     "icon.svg",
+    "icon.png",
     "README.md"
   ],
   "dsh": {

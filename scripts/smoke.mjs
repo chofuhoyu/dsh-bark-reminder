@@ -9,7 +9,7 @@
  */
 
 import assert from 'node:assert/strict'
-import { DEFAULT_CONFIG, publicConfig, resolveConfig } from '../host/config.js'
+import { DEFAULT_CONFIG, DEFAULT_ICON_URL, publicConfig, resolveConfig } from '../host/config.js'
 import { renderNotification } from '../host/messages.js'
 import { classifyApproval, BarkReminderRuntime } from '../host/runtime.js'
 import { createRoutes } from '../host/http.js'
@@ -83,6 +83,17 @@ assert.equal(defaults.config.triggers.idle, true)
 assert.equal(defaults.config.level, 'active')
 assert.equal(defaults.config.titleTemplate, '[DSH] {sessionTitle}')
 assert.equal(defaults.config.bodyTemplate, '{detail}')
+assert.equal(defaults.config.icon, DEFAULT_ICON_URL)
+assert.equal(DEFAULT_ICON_URL, 'https://raw.githubusercontent.com/chofuhoyu/dsh-bark-reminder/main/icon.png')
+
+// An explicitly cleared icon keeps Bark's native artwork.
+const nativeIcon = resolveConfig({ icon: '' }, { strict: true })
+assert.equal(nativeIcon.errors.length, 0)
+assert.equal(nativeIcon.config.icon, '')
+
+const customIcon = resolveConfig({ icon: ' https://example.com/icon.png ' }, { strict: true })
+assert.equal(customIcon.errors.length, 0)
+assert.equal(customIcon.config.icon, 'https://example.com/icon.png')
 
 const explicitLevel = resolveConfig({ level: 'timeSensitive' }, { strict: true })
 assert.equal(explicitLevel.errors.length, 0)
@@ -162,6 +173,7 @@ assert.equal(plain.reason, '允许这次编辑吗？')
   assert.match(requests[0].body.body, /Deletes production rows/)
   assert.equal(requests[0].body.level, 'active')
   assert.equal(requests[0].body.group, 'DSH')
+  assert.equal(requests[0].body.icon, DEFAULT_ICON_URL)
 
   // The very same approval asked again inside the window is de-duplicated.
   await listeners.get('approval/request')({
@@ -188,6 +200,26 @@ assert.equal(plain.reason, '允许这次编辑吗？')
   await wait(20)
   assert.equal(requests.length, 0)
   quiet.dispose()
+}
+
+// -- native icon fallback --------------------------------------------------
+
+{
+  requests.length = 0
+  const agent = makeAgent()
+  const { ctx, listeners } = makeContext(agent)
+  const runtime = new BarkReminderRuntime(ctx, resolveConfig({ icon: '' }).config)
+  runtime.install()
+  await listeners.get('approval/request')({
+    agent,
+    toolName: 'edit',
+    callId: 'call-native-icon',
+    reason: 'Auto review denied tool "edit": nope',
+  }, async () => 'rejected')
+  await wait(30)
+  assert.equal(requests.length, 1)
+  assert.equal('icon' in requests[0].body, false)
+  runtime.dispose()
 }
 
 // -- structured question ---------------------------------------------------
