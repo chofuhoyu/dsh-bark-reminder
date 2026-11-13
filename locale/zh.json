@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "Bark 提醒",
-    "description": "当 DSH 需要你操作时，通过 Bark 把提醒推送到 iPhone：审批、自动审查意见、沙盒提权、提问，以及会话结束。"
+    "description": "当 DSH 需要你处理时，通过 Bark 向 iPhone 推送通知：审批、自动审查意见、沙盒权限提升、提问，以及一轮结束。"
   }
 }

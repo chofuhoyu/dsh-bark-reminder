@@ -1,6 +1,6 @@
 /**
  * Bark reminders for DeepSeek Harness: push a notification to the user's iPhone
- * when the Harness needs a human decision or a session stops for good.
+ * when the Harness requires a human decision or a turn ends.
  *
  * Host half only; the settings page lives in `client.js`.
  */
