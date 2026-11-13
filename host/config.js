@@ -46,10 +46,11 @@ export const DEFAULT_CONFIG = Object.freeze({
   }),
   notifySubagents: false,
   idleDelayMs: 60_000,
-  // One short line for the event, then the context that helps identify the
-  // session. iOS already shows the delivery time, so the default omits it.
-  titleTemplate: '{kindLabel}',
-  bodyTemplate: '{detail}\n\n{sessionTitle}',
+  // The title identifies the product and the session; the body opens with the
+  // event label and continues with the generated detail. iOS already shows the
+  // delivery time, so the default omits it.
+  titleTemplate: '[DSH] {sessionTitle}',
+  bodyTemplate: '{kindLabel} {detail}',
   level: 'active',
   sound: '',
   group: 'DSH',
